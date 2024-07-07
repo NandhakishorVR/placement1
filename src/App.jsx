@@ -2,7 +2,6 @@ import { useState } from "react";
 import QuestionComponent from "../src/components/Quiz";
 import axios from "axios";
 import "./App.css";
-
 const App = () => {
   const [examStarted, setExamStarted] = useState(false);
   const [questions, setQuestions] = useState(null);

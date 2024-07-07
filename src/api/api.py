@@ -1,6 +1,6 @@
 import logging
 import json
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import google.generativeai as genai
@@ -11,9 +11,10 @@ app = FastAPI()
 origins = [
     "http://localhost:3000",  # React dev server
     "http://localhost:5173",  # Vite dev server
+    "http://localhost:5174",  # Add this
     "http://localhost:5175",
 ]
- 
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -24,11 +25,11 @@ app.add_middleware(
 )
 
 # Initialize GenerativeAI model and chat
-model = genai.GenerativeModel("gemini-1.5-flash")
-# Ensure to replace 'your_api_key_here' with your actual API key
-GOOGLE_API_KEY = "AIzaSyA-W9iNhXEOR84gKXHqKBf70PMhuMZATUM"
+GOOGLE_API_KEY = "AIzaSyA-W9iNhXEOR84gKXHqKBf70PMhuMZATUM"  # Replace with your actual API key
 genai.configure(api_key=GOOGLE_API_KEY)
+model = genai.GenerativeModel("gemini-1.5-flash")
 chat = model.start_chat(history=[])
+
 class RequestModel(BaseModel):
     data: str
 
@@ -56,15 +57,19 @@ def answerMyQn(a):
 
 @app.post("/api/answer_my_qn", response_model=ResponseModel)
 async def answer_my_qn(request: RequestModel):
-    resultSet = []
-    count = 0
-    while count != 5:
-        result = answerMyQn(request.data)
-        if result[5] <= len(result) - 2:
-            resultSet.append(result)
-            count +=  1
-    print(json.dumps(resultSet))
-    return {"result": resultSet}
+    try:
+        resultSet = []
+        count = 0
+        while count != 5:
+            result = answerMyQn(request.data)
+            if result[5] <= len(result) - 2:
+                resultSet.append(result)
+                count +=  1
+        logging.info(json.dumps(resultSet))
+        return {"result": resultSet}
+    except Exception as e:
+        logging.error(f"Error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
 
 if __name__ == '__main__':
     import uvicorn
