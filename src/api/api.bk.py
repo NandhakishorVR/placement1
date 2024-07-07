@@ -29,6 +29,7 @@ model = genai.GenerativeModel("gemini-1.5-flash")
 GOOGLE_API_KEY = "AIzaSyA-W9iNhXEOR84gKXHqKBf70PMhuMZATUM"
 genai.configure(api_key=GOOGLE_API_KEY)
 chat = model.start_chat(history=[])
+
 class RequestModel(BaseModel):
     data: str
 
