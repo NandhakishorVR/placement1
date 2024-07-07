@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import QuestionComponent from './QuestionComponent';
-import 'axios' from axios;
+import QuestionComponent from '../src/components/Quiz';
+import axios from 'axios';
 import './App.css';
 
 
@@ -14,9 +14,7 @@ const App = () => {
       setQuestions(response.data.result);
     }catch{
       console.log('Errror');
-
     }
-
     setExamStarted(true);
   };
 

@@ -1,20 +1,20 @@
-import pathlib
-import textwrap
-import google.generativeai as genai
+import logging
 import json
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from pydantic_settings import BaseSettings
-import logging
+import google.generativeai as genai
 
 app = FastAPI()
 
+# Define CORS origins
 origins = [
     "http://localhost:3000",  # React dev server
     "http://localhost:5173",  # Vite dev server
+    "http://localhost:5175",
 ]
-
+ 
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -23,14 +23,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Initialize GenerativeAI model and chat
 model = genai.GenerativeModel("gemini-1.5-flash")
-GOOGLE_API_KEY = "your_api_key_here"
+# Ensure to replace 'your_api_key_here' with your actual API key
+GOOGLE_API_KEY = "AIzaSyA-W9iNhXEOR84gKXHqKBf70PMhuMZATUM"
 genai.configure(api_key=GOOGLE_API_KEY)
 chat = model.start_chat(history=[])
-
-class Settings(BaseSettings):
-    class Config:
-        arbitrary_types_allowed = True
 
 class RequestModel(BaseModel):
     data: str
@@ -40,7 +38,7 @@ class ResponseModel(BaseModel):
 
 def answerMyQn(a):
     logging.info("Inside answerMyQn function")
-    response = chat.send_message("give me a mcq question on computer science interview along with exactly 5 options which are numbered using normal numbers without any further explanation")
+    response = chat.send_message("give me a mcq question on computer science along with exactly 5 options which are numbered using normal numbers without any further explanation")
     logging.info(f"First response: {response}")
     qn = response.text
     qn = qn.split('\n')
@@ -51,20 +49,23 @@ def answerMyQn(a):
     response = chat.send_message("give correct option number of above mcq no need of other explanation and only option number required")
     logging.info(f"Second response: {response}")
     ans = response.text
-    ans = list(ans)
-    result = qn + list(ans[0])
-    result = json.dumps(result)
+    ans = list(ans)[0]
+    result = qn + [ans]
     logging.info(f"Final result: {result}")
+    result[5] = int(result[5].split('.')[0])
     return result
 
 @app.post("/api/answer_my_qn", response_model=ResponseModel)
 async def answer_my_qn(request: RequestModel):
     resultSet = []
-    for i in range(6):
+    count = 0
+    while count != 5:
         result = answerMyQn(request.data)
-        if i > 0 :
-            resultSet[i] = result
-    return ResponseModel(result=resultSet)
+        if result[5] <= len(result) - 2:
+            resultSet.append(result)
+            count +=  1
+    print(resultSet)
+    return {"result": resultSet}
 
 if __name__ == '__main__':
     import uvicorn
